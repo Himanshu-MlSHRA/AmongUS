@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -sL -o /d/AmonUS/client/public/fonts/Minecraft-Regular.ttf \"https://github.com/tryashtar/minecraft-ttf/releases/download/v1.4/MinecraftDefault-Regular.ttf\")",
+      "Bash(npx vite *)"
+    ]
+  }
+}

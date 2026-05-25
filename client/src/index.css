@@ -1,0 +1,258 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  /* Crisp pixel-edge rendering for the vintage vibe */
+  image-rendering: pixelated;
+}
+
+body {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  background: #f5efe4;
+  color: #1a1a1a;
+  /* Soft paper grain — barely visible, just a vintage feel */
+  background-image:
+    radial-gradient(rgba(60,40,20,0.05) 1px, transparent 1px),
+    radial-gradient(rgba(60,40,20,0.04) 1px, transparent 1px);
+  background-size: 3px 3px, 7px 7px;
+  background-position: 0 0, 1px 2px;
+}
+.dark body {
+  background: #0f1117;
+  color: #e6e9ef;
+  background-image:
+    radial-gradient(rgba(255,170,90,0.04) 1px, transparent 1px),
+    radial-gradient(rgba(120,200,255,0.03) 1px, transparent 1px);
+  background-size: 3px 3px, 7px 7px;
+}
+
+@layer components {
+  /* Retro panel — light/dark aware. Now with a faint scanline overlay
+     for a soft CRT vibe (pseudo-element doesn't affect layout). */
+  .panel {
+    @apply relative rounded-md border bg-cream-50 border-ink-900 shadow-retro
+           dark:bg-terminal-800 dark:border-terminal-500 dark:shadow-none
+           dark:ring-1 dark:ring-terminal-500/60;
+  }
+  .panel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background-image: repeating-linear-gradient(
+      0deg, rgba(0,0,0,0.025) 0 1px, transparent 1px 3px
+    );
+    opacity: 0.6;
+    mix-blend-mode: multiply;
+  }
+  .dark .panel::after {
+    background-image: repeating-linear-gradient(
+      0deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 3px
+    );
+    mix-blend-mode: screen;
+  }
+  /* Lift real children above the scanline overlay */
+  .panel > * { position: relative; z-index: 1; }
+  .panel-glass {
+    @apply rounded-md border backdrop-blur
+           bg-cream-50/80 border-ink-900/60 shadow-retro
+           dark:bg-terminal-800/70 dark:border-neon-orange/40
+           dark:shadow-[0_0_24px_rgba(255,122,61,0.15)];
+  }
+
+  /* Heading style — keep the bold display font for big titles so longform
+     remains readable. Pixel font is reserved for small accent labels. */
+  .heading {
+    @apply font-display tracking-tight font-bold uppercase;
+  }
+  .mono {
+    @apply font-mono;
+  }
+  /* Soft pixel accent label — VT323 is readable but unmistakably retro.
+     Use on PanelHeader, modal titles, room codes, etc. */
+  .heading-pixel {
+    font-family: 'VT323', 'JetBrains Mono', monospace;
+    letter-spacing: 0.18em;
+    font-weight: 400;
+    /* VT323 is tall+narrow — bump 1 step so it visually matches text-xs */
+    line-height: 1;
+  }
+  /* Press Start 2P — chunkier, save for very short callouts only */
+  .heading-arcade {
+    font-family: 'Press Start 2P', 'VT323', monospace;
+    letter-spacing: 0.05em;
+    line-height: 1.2;
+  }
+
+  /* Button system */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2
+           border border-ink-900 rounded-md font-mono text-sm font-medium
+           transition-all select-none cursor-pointer
+           bg-cream-50 text-ink-900 hover:bg-cream-100 active:translate-y-px
+           shadow-retro hover:shadow-retro-lg
+           dark:border-terminal-500 dark:bg-terminal-700 dark:text-cream-100
+           dark:hover:bg-terminal-600 dark:shadow-none
+           dark:hover:shadow-[0_0_12px_rgba(34,211,238,0.25)];
+  }
+  .btn-primary {
+    @apply bg-neon-orange text-ink-900 border-ink-900 hover:bg-orange-500
+           dark:text-ink-900 dark:border-neon-orange dark:bg-neon-orange
+           dark:hover:bg-orange-400
+           dark:hover:shadow-[0_0_18px_rgba(255,122,61,0.5)];
+  }
+  .btn-danger {
+    @apply bg-red-500 text-white border-ink-900 hover:bg-red-600
+           dark:border-red-400;
+  }
+  .btn-ghost {
+    @apply bg-transparent shadow-none hover:bg-cream-100
+           dark:hover:bg-terminal-600 border-transparent;
+  }
+  .btn-sm { @apply px-2.5 py-1 text-xs; }
+  .btn:disabled {
+    @apply opacity-50 cursor-not-allowed pointer-events-none;
+  }
+
+  /* Input */
+  .input {
+    @apply w-full px-3 py-2 rounded-md border border-ink-900 bg-cream-50
+           font-mono text-sm placeholder:text-ink-700/60
+           focus:outline-none focus:ring-2 focus:ring-neon-orange/60
+           dark:bg-terminal-700 dark:border-terminal-500 dark:text-cream-100
+           dark:placeholder:text-cream-100/40;
+  }
+
+  /* Code-y label box (room code etc.) — pixel font, chunky shadow */
+  .label-chip {
+    @apply inline-flex items-center gap-2 px-3 py-1.5 rounded
+           border border-ink-900 bg-cream-100 font-mono text-sm
+           dark:bg-terminal-700 dark:border-terminal-500;
+    box-shadow: 2px 2px 0 0 rgba(0,0,0,0.6);
+  }
+  .dark .label-chip {
+    box-shadow: 2px 2px 0 0 rgba(255,122,61,0.35);
+  }
+
+  /* Subtle pixel-stepped border accent — apply to elements that want extra retro */
+  .pixel-edge {
+    box-shadow:
+      0 -2px 0 0 rgba(0,0,0,0.75),
+      0  2px 0 0 rgba(0,0,0,0.75),
+      -2px 0 0 0 rgba(0,0,0,0.75),
+       2px 0 0 0 rgba(0,0,0,0.75);
+  }
+  .dark .pixel-edge {
+    box-shadow:
+      0 -2px 0 0 rgba(255,122,61,0.45),
+      0  2px 0 0 rgba(255,122,61,0.45),
+      -2px 0 0 0 rgba(34,211,238,0.40),
+       2px 0 0 0 rgba(34,211,238,0.40);
+  }
+
+  /* Soft CRT glow text — only for short labels */
+  .crt-text {
+    font-family: 'VT323', 'JetBrains Mono', monospace;
+    text-shadow:
+      0 0 1px rgba(255,122,61,0.5),
+      0 0 6px rgba(255,122,61,0.25);
+  }
+  .dark .crt-text {
+    text-shadow:
+      0 0 2px rgba(34,211,238,0.45),
+      0 0 8px rgba(34,211,238,0.25);
+  }
+
+  /* Scanlines for cyber feel */
+  .scanlines::before {
+    content: '';
+    position: absolute; inset: 0;
+    pointer-events: none;
+    background-image: repeating-linear-gradient(
+      0deg, rgba(0,0,0,0.04) 0 1px, transparent 1px 3px
+    );
+  }
+  .dark .scanlines::before {
+    background-image: repeating-linear-gradient(
+      0deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 3px
+    );
+  }
+
+  /* Custom scrollbar */
+  .nice-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+  .nice-scroll::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.25);
+    border-radius: 4px;
+  }
+  .dark .nice-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255,122,61,0.35);
+  }
+}
+
+/* Animated background */
+.bg-animated {
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(255,122,61,0.15), transparent 60%),
+    radial-gradient(800px 400px at 100% 100%, rgba(34,211,238,0.10), transparent 60%),
+    linear-gradient(180deg, #f5efe4, #ebe1cc);
+}
+.dark .bg-animated {
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(255,122,61,0.20), transparent 60%),
+    radial-gradient(800px 400px at 100% 100%, rgba(34,211,238,0.18), transparent 60%),
+    linear-gradient(180deg, #0a0c12, #0f1117);
+}
+
+/* Pixel-grid floating layer */
+.pixel-grid {
+  background-image:
+    linear-gradient(rgba(26,26,26,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26,26,26,0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+.dark .pixel-grid {
+  background-image:
+    linear-gradient(rgba(255,122,61,0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,122,61,0.08) 1px, transparent 1px);
+}
+
+/* Rolling sky for retro Japanese vibe */
+.sky-roll {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.6), transparent 50%),
+    radial-gradient(2px 2px at 80px 120px, rgba(255,255,255,0.5), transparent 50%),
+    radial-gradient(1px 1px at 160px 60px, rgba(255,255,255,0.7), transparent 50%),
+    radial-gradient(1px 1px at 240px 200px, rgba(255,255,255,0.4), transparent 50%);
+  background-size: 320px 320px;
+  animation: skyMove 60s linear infinite;
+  opacity: 0.4;
+}
+.dark .sky-roll { opacity: 0.7; }
+@keyframes skyMove {
+  from { background-position: 0 0; }
+  to { background-position: 320px 320px; }
+}
+
+/* Headline glitch effect on heavy hover */
+.headline {
+  text-shadow: 2px 2px 0 rgba(255,122,61,0.25);
+}
+.dark .headline {
+  text-shadow:
+    1px 0 0 rgba(255,122,61,0.7),
+    -1px 0 0 rgba(34,211,238,0.6);
+}
