@@ -1,7 +1,9 @@
+import 'dotenv/config';
 import http from 'node:http';
 import express from 'express';
 import cors from 'cors';
 import { Server } from 'socket.io';
+import { authRouter, verifyToken } from './auth.js';
 import {
   createRoom, getRoom, listPublicRooms, listAllRooms, joinRoom, leaveRoom,
   kickPlayer, mutePlayer, updateSettings, appendChat, startGame, playAgain,
@@ -15,7 +17,9 @@ const ORIGIN = process.env.CLIENT_ORIGIN || '*';
 
 const app = express();
 app.use(cors({ origin: ORIGIN }));
+app.use(express.json());
 app.get('/health', (_req, res) => res.json({ ok: true }));
+app.use('/auth', authRouter);
 app.get('/rooms', (_req, res) => res.json(listPublicRooms()));
 app.get('/rooms/all', (_req, res) => res.json(listAllRooms()));
 
@@ -36,8 +40,31 @@ function broadcastRoom(code) {
   }
 }
 
+// Auto-identify authenticated users on socket connection via JWT
+io.use((socket, next) => {
+  const token = socket.handshake.auth?.token;
+  if (token) {
+    const decoded = verifyToken(token);
+    if (decoded) {
+      socket.authUser = {
+        name: decoded.name,
+        avatar: decoded.avatar,
+        provider: decoded.provider,
+        googleId: decoded.sub,
+      };
+    }
+  }
+  next();
+});
+
 io.on('connection', (socket) => {
-  sessions.set(socket.id, { name: null, avatar: null, code: null });
+  // If the socket authenticated via JWT, pre-fill the session
+  const authUser = socket.authUser;
+  sessions.set(socket.id, {
+    name: authUser?.name || null,
+    avatar: authUser?.avatar || null,
+    code: null,
+  });
 
   socket.on('session:identify', ({ name, avatar }, ack) => {
     const s = sessions.get(socket.id);

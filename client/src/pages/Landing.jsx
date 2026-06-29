@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Settings, User, Globe2, KeyRound, Hammer, ArrowLeft, Sun, Moon } from 'lucide-react';
+import { Settings, User, Globe2, KeyRound, Hammer, ArrowLeft, Sun, Moon, LogOut } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { AnimatedBackground } from '../components/AnimatedBackground';
 import { Typewriter } from '../components/Typewriter';
@@ -16,6 +16,7 @@ import { socket } from '../lib/socket';
 
 export function Landing({ onEnterRoom }) {
   const user = useUserStore();
+  const logout = useUserStore((s) => s.logout);
   const setBanner = useRoomStore((s) => s.setBanner);
   const banner = useRoomStore((s) => s.banner);
   const { theme, toggleTheme } = useTheme();
@@ -33,6 +34,14 @@ export function Landing({ onEnterRoom }) {
     if (!user.name) { setAuthOpen(true); return false; }
     socket.emit('session:identify', { name: user.name, avatar: user.avatar });
     return true;
+  }
+
+  function handleSignOut() {
+    if (window.google?.accounts?.id) {
+      try { window.google.accounts.id.disableAutoSelect(); } catch { /* ok */ }
+    }
+    logout();
+    setBanner({ kind: 'info', text: 'Signed out successfully.' });
   }
 
   function createRoom(visibility) {
@@ -126,7 +135,11 @@ export function Landing({ onEnterRoom }) {
           >
             {user.name ? (
               <>
-                <Avatar name={user.name} src={user.avatar} size={20} />
+                {user.avatar ? (
+                  <img src={user.avatar} alt={user.name} className="w-5 h-5 rounded-full" referrerPolicy="no-referrer" />
+                ) : (
+                  <Avatar name={user.name} src={user.avatar} size={20} />
+                )}
                 <span className="hidden sm:inline">{user.name}</span>
               </>
             ) : (
@@ -136,6 +149,15 @@ export function Landing({ onEnterRoom }) {
               </>
             )}
           </button>
+          {user.name && (
+            <button
+              onClick={handleSignOut}
+              className="btn btn-sm btn-ghost"
+              title="Sign out"
+            >
+              <LogOut size={14} />
+            </button>
+          )}
           <button
             onClick={() => setSettingsOpen(true)}
             className="btn btn-sm"
@@ -202,7 +224,11 @@ export function Landing({ onEnterRoom }) {
 
       {/* Footer */}
       <footer className="w-full px-5 sm:px-8 py-4 flex items-center justify-between text-[11px] uppercase tracking-widest font-mono opacity-60">
-        <span>{user.name ? `signed in as ${user.name}` : 'guest mode'}</span>
+        <span>
+          {user.name
+            ? `signed in as ${user.name}${user.provider === 'google' ? ' (google)' : ' (guest)'}`
+            : 'not signed in'}
+        </span>
       </footer>
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />

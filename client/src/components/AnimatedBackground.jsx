@@ -8,15 +8,15 @@ const LOGOS = [
   { slug: 'javascript', color: 'f7df1e', alt: 'JavaScript' },
   { slug: 'typescript', color: '3178c6', alt: 'TypeScript' },
   { slug: 'python',     color: '3776ab', alt: 'Python' },
-  { slug: 'go',         color: '00add8', alt: 'Go' },
-  { slug: 'rust',       color: 'ce422b', alt: 'Rust' },
+  { slug: 'nodedotjs',         color: '5fa04e', alt: 'Node.js' },
+  { slug: 'php',       color: 'ce422b', alt: 'Rust' },
   { slug: 'openjdk',    color: 'f89820', alt: 'Java' },
   { slug: 'cplusplus',  color: '00599c', alt: 'C++' },
   { slug: 'ruby',       color: 'cc342d', alt: 'Ruby' },
   { slug: 'html5',      color: 'e34c26', alt: 'HTML5' },
-  { slug: 'css3',       color: '1572b6', alt: 'CSS3' },
+  { slug: 'css',       color: '1572b6', alt: 'CSS3' },
   { slug: 'react',      color: '61dafb', alt: 'React' },
-  { slug: 'nodedotjs',  color: '5fa04e', alt: 'Node.js' },
+  { slug: 'go',  color: '00add8', alt: 'Go' },
 ];
 
 // Stable seeded positions so SSR/render order doesn't reshuffle them.

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Play, AlertOctagon, Bell, Sun, Moon, ArrowLeft, Users, Code2, BadgeCheck,
+  MessageSquareOff,
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Panel, PanelHeader } from '../ui/Panel';

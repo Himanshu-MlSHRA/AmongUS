@@ -3,13 +3,35 @@ import { persist } from 'zustand/middleware';
 
 export const useUserStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       name: '',
       avatar: null,        // url string or null
-      provider: null,      // 'google' | 'github' | 'apple' | 'guest'
-      setIdentity: ({ name, avatar, provider }) =>
-        set({ name, avatar, provider: provider || 'guest' }),
-      clear: () => set({ name: '', avatar: null, provider: null }),
+      email: null,         // email from Google
+      provider: null,      // 'google' | 'guest'
+      token: null,         // JWT token
+      setIdentity: ({ name, avatar, provider, email, token }) =>
+        set({
+          name,
+          avatar: avatar || null,
+          email: email || null,
+          provider: provider || 'guest',
+          token: token || get().token,
+        }),
+      setToken: (token) => set({ token }),
+      logout: () => set({
+        name: '',
+        avatar: null,
+        email: null,
+        provider: null,
+        token: null,
+      }),
+      clear: () => set({
+        name: '',
+        avatar: null,
+        email: null,
+        provider: null,
+        token: null,
+      }),
     }),
     { name: 'auc:user' }
   )
