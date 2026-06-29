@@ -13,7 +13,10 @@ import {
 import { runUserCode } from './executor.js';
 
 const PORT = process.env.PORT || 3001;
-const ORIGIN = process.env.CLIENT_ORIGIN || '*';
+const ORIGIN = [
+  "http://localhost:5173",
+  "https://amongusforcoder.vercel.app"
+];
 
 const app = express();
 app.use(cors({ origin: ORIGIN }));
