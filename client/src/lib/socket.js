@@ -12,5 +12,4 @@ export const socket = io(URL, {
   reconnectionDelay: 1000,
   reconnectionDelayMax: 5000,
   timeout: 10000,
-  withCredentials: true,
 });
