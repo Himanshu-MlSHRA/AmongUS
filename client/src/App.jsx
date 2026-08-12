@@ -18,13 +18,19 @@ function Router() {
   const [page, setPage] = useState('landing');     // landing | lobby | game
   const [kickedOpen, setKickedOpen] = useState(false);
   const [connected, setConnected] = useState(socket.connected);
+  // Delay showing the banner so it doesn't flash on first load
+  const [showDisconnectBanner, setShowDisconnectBanner] = useState(false);
   // forces a re-render every second so meeting countdown ticks
   const [, setTick] = useState(0);
 
   // track connection & identify on (re)connect
   useEffect(() => {
+    let bannerTimer = null;
+
     function onConnect() {
       setConnected(true);
+      setShowDisconnectBanner(false);
+      if (bannerTimer) { clearTimeout(bannerTimer); bannerTimer = null; }
       // Always re-identify on every connect/reconnect so the server has our session
       if (user.name) {
         socket.emit('session:identify', { name: user.name, avatar: user.avatar });
@@ -32,14 +38,23 @@ function Router() {
     }
     function onDisconnect() {
       setConnected(false);
+      // Wait 2s before showing the banner to avoid a flash on fast reconnects
+      bannerTimer = setTimeout(() => setShowDisconnectBanner(true), 2000);
+    }
+    function onConnectError() {
+      setConnected(false);
+      bannerTimer = setTimeout(() => setShowDisconnectBanner(true), 2000);
     }
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
+    socket.on('connect_error', onConnectError);
     // Fire immediately if already connected
     if (socket.connected) onConnect();
     return () => {
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
+      socket.off('connect_error', onConnectError);
+      if (bannerTimer) clearTimeout(bannerTimer);
     };
   }, [user.name, user.avatar]);
 
@@ -89,17 +104,22 @@ function Router() {
 
   return (
     <>
-      {/* Connection status banner */}
-      {!connected && (
+      {/* Connection status banner — only shown after 2s delay to avoid flash */}
+      {!connected && showDisconnectBanner && (
         <div
           style={{
             position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
-            background: '#ef4444', color: '#fff', textAlign: 'center',
-            padding: '6px 12px', fontSize: '12px', fontFamily: 'monospace',
-            letterSpacing: '0.05em',
+            background: 'linear-gradient(90deg, #b91c1c, #dc2626)',
+            color: '#fff', textAlign: 'center',
+            padding: '8px 16px', fontSize: '13px', fontFamily: 'monospace',
+            letterSpacing: '0.05em', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', gap: '8px',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
           }}
         >
-          ⚠ Disconnected from server — reconnecting…
+          <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite', fontSize: '14px' }}>↻</span>
+          <span>Reconnecting to server…</span>
+          <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
         </div>
       )}
       {page === 'landing' && <Landing onEnterRoom={handleEnterRoom} />}
