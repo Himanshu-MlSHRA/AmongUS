@@ -17,19 +17,30 @@ function Router() {
 
   const [page, setPage] = useState('landing');     // landing | lobby | game
   const [kickedOpen, setKickedOpen] = useState(false);
+  const [connected, setConnected] = useState(socket.connected);
   // forces a re-render every second so meeting countdown ticks
   const [, setTick] = useState(0);
 
-  // identify on connect
+  // track connection & identify on (re)connect
   useEffect(() => {
     function onConnect() {
+      setConnected(true);
+      // Always re-identify on every connect/reconnect so the server has our session
       if (user.name) {
         socket.emit('session:identify', { name: user.name, avatar: user.avatar });
       }
     }
+    function onDisconnect() {
+      setConnected(false);
+    }
     socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
+    // Fire immediately if already connected
     if (socket.connected) onConnect();
-    return () => socket.off('connect', onConnect);
+    return () => {
+      socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
+    };
   }, [user.name, user.avatar]);
 
   // global socket listeners
@@ -78,6 +89,19 @@ function Router() {
 
   return (
     <>
+      {/* Connection status banner */}
+      {!connected && (
+        <div
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
+            background: '#ef4444', color: '#fff', textAlign: 'center',
+            padding: '6px 12px', fontSize: '12px', fontFamily: 'monospace',
+            letterSpacing: '0.05em',
+          }}
+        >
+          ⚠ Disconnected from server — reconnecting…
+        </div>
+      )}
       {page === 'landing' && <Landing onEnterRoom={handleEnterRoom} />}
       {page === 'lobby' && <Lobby onLeave={handleLeave} />}
       {page === 'game' && <Game onLeave={handleLeave} />}

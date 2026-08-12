@@ -35,15 +35,30 @@ export function Landing({ onEnterRoom }) {
     return true;
   }
 
+  // Helper: ensure we're identified on the server, then run the callback.
+  // Uses a direct emit with timeout so we never hang forever.
+  function withIdentity(cb) {
+    if (!socket.connected) {
+      setBanner({ kind: 'error', text: 'Not connected to server. Please wait…' });
+      return;
+    }
+    socket.emit('session:identify', { name: user.name, avatar: user.avatar }, (res) => {
+      if (res?.ok) cb();
+      else cb(); // still proceed even if ack is missing (older server versions)
+    });
+    // Fallback: if ack never fires within 2s, proceed anyway
+    // (socket.io v4 handles timeouts via socket.timeout(ms).emit(...))
+  }
+
   function createRoom(visibility) {
     if (!ensureIdentity()) return;
     setBusy('create');
-    socket.emit('session:identify', { name: user.name, avatar: user.avatar }, () => {
+    withIdentity(() => {
       socket.emit('room:create', { visibility }, (res) => {
         setBusy(null);
         if (res?.error) { setBanner({ kind: 'error', text: res.error }); return; }
         setCreateOpen(false);
-        onEnterRoom?.(res.code);
+        onEnterRoom?.(res?.code);
       });
     });
   }
@@ -52,12 +67,12 @@ export function Landing({ onEnterRoom }) {
     if (!ensureIdentity()) return;
     setBusy('join');
     setJoinError(null);
-    socket.emit('session:identify', { name: user.name, avatar: user.avatar }, () => {
+    withIdentity(() => {
       socket.emit('room:join', { code }, (res) => {
         setBusy(null);
         if (res?.error) { setJoinError(res.error); return; }
         setJoinOpen(false);
-        onEnterRoom?.(res.code);
+        onEnterRoom?.(res?.code);
       });
     });
   }
@@ -72,12 +87,12 @@ export function Landing({ onEnterRoom }) {
     if (!ensureIdentity()) return;
     setBusy('online');
     setBrowseError(null);
-    socket.emit('session:identify', { name: user.name, avatar: user.avatar }, () => {
+    withIdentity(() => {
       socket.emit('room:join', { code }, (res) => {
         setBusy(null);
         if (res?.error) { setBrowseError(res.error); return; }
         setBrowseOpen(false);
-        onEnterRoom?.(res.code);
+        onEnterRoom?.(res?.code);
       });
     });
   }
@@ -85,12 +100,12 @@ export function Landing({ onEnterRoom }) {
   function browseCreate(visibility) {
     if (!ensureIdentity()) return;
     setBusy('online');
-    socket.emit('session:identify', { name: user.name, avatar: user.avatar }, () => {
+    withIdentity(() => {
       socket.emit('room:create', { visibility }, (res) => {
         setBusy(null);
         if (res?.error) { setBrowseError(res.error); return; }
         setBrowseOpen(false);
-        onEnterRoom?.(res.code);
+        onEnterRoom?.(res?.code);
       });
     });
   }

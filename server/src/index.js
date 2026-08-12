@@ -11,17 +11,37 @@ import {
 import { runUserCode } from './executor.js';
 
 const PORT = process.env.PORT || 3001;
-const ORIGIN = process.env.CLIENT_ORIGIN || '*';
+
+// Allow multiple origins: production URL + local dev URLs
+// Strip trailing slashes so Render env vars like 'https://x.vercel.app/' still match
+const ALLOWED_ORIGINS = [
+  process.env.CLIENT_ORIGIN,
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:4173',
+  'http://localhost:3000',
+].filter(Boolean).map((o) => o.replace(/\/+$/, ''));
+
+function originAllowed(origin, callback) {
+  // Allow requests with no origin (curl, mobile apps, same-origin)
+  if (!origin) return callback(null, true);
+  // Normalize incoming origin (strip trailing slash just in case)
+  const normalized = origin.replace(/\/+$/, '');
+  if (ALLOWED_ORIGINS.includes(normalized)) return callback(null, true);
+  // If CLIENT_ORIGIN is '*' or not set, allow all
+  if (!process.env.CLIENT_ORIGIN || process.env.CLIENT_ORIGIN === '*') return callback(null, true);
+  return callback(new Error('Not allowed by CORS: ' + origin));
+}
 
 const app = express();
-app.use(cors({ origin: ORIGIN }));
+app.use(cors({ origin: originAllowed, credentials: true }));
 app.get('/health', (_req, res) => res.json({ ok: true }));
 app.get('/rooms', (_req, res) => res.json(listPublicRooms()));
 app.get('/rooms/all', (_req, res) => res.json(listAllRooms()));
 
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: ORIGIN, methods: ['GET', 'POST'] },
+  cors: { origin: originAllowed, methods: ['GET', 'POST'], credentials: true },
 });
 
 // socketId -> { name, avatar, code }
